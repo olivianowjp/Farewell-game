@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Well Do You Know Ai? 🎉</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; }
+
+  .lang-btn { position: fixed; top: 16px; right: 16px; z-index: 100; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4); color: #fff; padding: 8px 18px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: 700; backdrop-filter: blur(6px); transition: all 0.2s; }
+  .lang-btn:hover { background: rgba(255,255,255,0.25); }
+
+  /* SCREENS */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+
+  /* LOBBY */
+  #lobby { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); text-align: center; }
+  .title-emoji { font-size: 64px; margin-bottom: 16px; animation: bounce 2s infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  .game-title { font-size: 2.2em; font-weight: 800; background: linear-gradient(90deg, #f9ca24, #f0932b, #eb4d4b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .game-subtitle { font-size: 1em; color: rgba(255,255,255,0.6); margin-bottom: 40px; }
+  .role-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-bottom: 32px; }
+  .role-card { background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 24px 28px; cursor: pointer; transition: all 0.25s; width: 200px; }
+  .role-card:hover { background: rgba(255,255,255,0.15); border-color: #f9ca24; transform: translateY(-4px); }
+  .role-card.selected { background: rgba(249,202,36,0.2); border-color: #f9ca24; }
+  .role-icon { font-size: 36px; margin-bottom: 10px; }
+  .role-name { font-size: 1em; font-weight: 700; margin-bottom: 4px; }
+  .role-desc { font-size: 0.78em; color: rgba(255,255,255,0.55); }
+  .name-input { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.25); color: #fff; padding: 12px 20px; border-radius: 12px; font-size: 1em; width: 280px; margin-bottom: 20px; text-align: center; outline: none; }
+  .name-input:focus { border-color: #f9ca24; }
+  .name-input::placeholder { color: rgba(255,255,255,0.35); }
+  .btn { padding: 14px 36px; border-radius: 12px; border: none; font-size: 1em; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, #f9ca24, #f0932b); color: #1a1a2e; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(249,202,36,0.4); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* HOST PANEL */
+  #host-panel { background: linear-gradient(135deg, #0f3460, #1a1a2e); width: 100%; max-width: 800px; }
+  .host-header { text-align: center; margin-bottom: 32px; }
+  .host-header h2 { font-size: 1.6em; font-weight: 800; color: #f9ca24; }
+  .host-header p { color: rgba(255,255,255,0.55); font-size: 0.9em; margin-top: 6px; }
+  .player-list { background: rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; margin-bottom: 24px; width: 100%; }
+  .player-list h3 { font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); margin-bottom: 14px; }
+  .player-chips { display: flex; flex-wrap: wrap; gap: 10px; min-height: 40px; }
+  .player-chip { background: rgba(249,202,36,0.15); border: 1px solid rgba(249,202,36,0.4); border-radius: 20px; padding: 6px 14px; font-size: 0.85em; font-weight: 600; color: #f9ca24; }
+  .q-preview { background: rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; margin-bottom: 24px; width: 100%; }
+  .q-preview h3 { font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); margin-bottom: 14px; }
+  .q-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.88em; }
+  .q-num { color: rgba(255,255,255,0.35); width: 24px; }
+  .q-type-badge { font-size: 0.72em; padding: 2px 8px; border-radius: 8px; font-weight: 700; }
+  .badge-fact { background: rgba(116,185,255,0.2); color: #74b9ff; }
+  .badge-choice { background: rgba(162,155,254,0.2); color: #a29bfe; }
+  .badge-sabotage { background: rgba(253,121,168,0.2); color: #fd79a8; }
+
+  /* PLAYER WAITING */
+  #player-waiting { background: linear-gradient(135deg, #1a1a2e, #16213e); text-align: center; }
+  .waiting-animation { font-size: 48px; margin-bottom: 20px; animation: spin 3s linear infinite; }
+  @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+  /* QUESTION SCREEN */
+  #question-screen { background: linear-gradient(135deg, #1a1a2e, #16213e); width: 100%; }
+  .q-container { width: 100%; max-width: 700px; }
+  .q-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .q-counter { font-size: 0.85em; color: rgba(255,255,255,0.45); }
+  .q-type-tag { font-size: 0.78em; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .timer-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-bottom: 24px; overflow: hidden; }
+  .timer-fill { height: 100%; background: linear-gradient(90deg, #55efc4, #f9ca24, #e17055); border-radius: 3px; transition: width 1s linear; }
+  .q-text { font-size: 1.35em; font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
+  .q-text-sub { font-size: 0.9em; color: rgba(255,255,255,0.5); margin-bottom: 28px; font-style: italic; }
+  .options-grid { display: grid; gap: 12px; }
+  .option-btn { background: rgba(255,255,255,0.07); border: 2px solid rgba(255,255,255,0.15); color: #fff; padding: 16px 20px; border-radius: 14px; font-size: 0.95em; font-weight: 600; cursor: pointer; text-align: left; transition: all 0.2s; line-height: 1.35; }
+  .option-btn:hover:not(:disabled) { background: rgba(255,255,255,0.15); border-color: #a29bfe; transform: translateX(4px); }
+  .option-btn.selected { background: rgba(162,155,254,0.25); border-color: #a29bfe; }
+  .option-btn.correct { background: rgba(85,239,196,0.25); border-color: #55efc4 !important; }
+  .option-btn.wrong { background: rgba(225,112,85,0.25); border-color: #e17055 !important; }
+  .option-btn:disabled { cursor: not-allowed; }
+  .submitted-msg { text-align: center; margin-top: 20px; font-size: 0.9em; color: rgba(255,255,255,0.5); font-style: italic; }
+
+  /* HOST QUESTION VIEW */
+  #host-question { background: linear-gradient(135deg, #0f3460, #1a1a2e); width: 100%; }
+  .host-q-container { width: 100%; max-width: 800px; }
+  .live-answers { background: rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; margin-top: 20px; }
+  .answer-bar { margin-bottom: 12px; }
+  .answer-label { display: flex; justify-content: space-between; font-size: 0.85em; margin-bottom: 5px; }
+  .bar-track { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; transition: width 0.5s ease; }
+  .host-controls { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+  .btn-reveal { background: linear-gradient(135deg, #a29bfe, #6c5ce7); color: #fff; }
+  .btn-reveal:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,92,231,0.4); }
+  .btn-next { background: linear-gradient(135deg, #55efc4, #00b894); color: #1a1a2e; }
+  .btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,184,148,0.4); }
+  .btn-end { background: linear-gradient(135deg, #fd79a8, #e84393); color: #fff; }
+
+  /* REVEAL */
+  #reveal-screen { background: linear-gradient(135deg, #1a1a2e, #16213e); width: 100%; text-align: center; }
+  .reveal-container { max-width: 700px; width: 100%; }
+  .reveal-label { font-size: 0.85em; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
+  .reveal-question { font-size: 1.3em; font-weight: 700; margin-bottom: 24px; }
+  .reveal-options { display: grid; gap: 10px; margin-bottom: 24px; }
+  .reveal-opt { padding: 14px 20px; border-radius: 12px; font-size: 0.95em; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .reveal-opt.correct-ans { background: rgba(85,239,196,0.2); border: 2px solid #55efc4; }
+  .reveal-opt.wrong-ans { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.45); }
+  .reveal-opt .voters { font-size: 0.8em; color: rgba(255,255,255,0.5); }
+  .score-flash { font-size: 3em; font-weight: 800; color: #f9ca24; margin: 16px 0; animation: pop 0.5s ease; }
+  @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+  .funny-comment { background: rgba(253,121,168,0.1); border: 1px solid rgba(253,121,168,0.3); border-radius: 12px; padding: 12px 18px; font-size: 0.88em; color: #fd79a8; font-style: italic; margin-bottom: 20px; }
+
+  /* LEADERBOARD */
+  #leaderboard { background: linear-gradient(135deg, #1a1a2e, #0f3460); text-align: center; }
+  .lb-container { max-width: 600px; width: 100%; }
+  .lb-title { font-size: 1.8em; font-weight: 800; color: #f9ca24; margin-bottom: 6px; }
+  .lb-subtitle { color: rgba(255,255,255,0.4); font-size: 0.85em; margin-bottom: 28px; }
+  .lb-row { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,0.06); border-radius: 14px; padding: 14px 18px; margin-bottom: 10px; }
+  .lb-rank { font-size: 1.4em; width: 40px; text-align: center; }
+  .lb-name { flex: 1; font-weight: 700; font-size: 1em; text-align: left; }
+  .lb-score { font-size: 1.1em; font-weight: 800; color: #f9ca24; }
+  .lb-row.top1 { background: rgba(249,202,36,0.15); border: 2px solid rgba(249,202,36,0.4); }
+  .lb-row.top2 { background: rgba(192,192,192,0.1); border: 2px solid rgba(192,192,192,0.3); }
+  .lb-row.top3 { background: rgba(205,127,50,0.1); border: 2px solid rgba(205,127,50,0.3); }
+
+  /* FINAL */
+  #final-screen { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); text-align: center; }
+  .confetti-area { font-size: 3em; margin-bottom: 16px; animation: wiggle 1s infinite; }
+  @keyframes wiggle { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+  .final-title { font-size: 2em; font-weight: 800; background: linear-gradient(90deg,#f9ca24,#fd79a8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom: 8px; }
+  .final-msg { color: rgba(255,255,255,0.6); font-size: 0.95em; margin-bottom: 32px; max-width: 480px; }
+  .memory-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 24px; max-width: 480px; width: 100%; margin: 0 auto 24px; }
+  .memory-card h3 { font-size: 0.8em; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
+  .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.9em; }
+  .stat-row:last-child { border: none; }
+  .stat-label { color: rgba(255,255,255,0.5); }
+  .stat-val { font-weight: 700; color: #f9ca24; }
+
+  .hidden { display: none !important; }
+  .error-msg { color: #fd79a8; font-size: 0.85em; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<button class="lang-btn" onclick="toggleLang()" id="langToggle">🇯🇵 日本語</button>
+
+<!-- PASSWORD -->
+<div class="screen active" id="password-screen">
+  <div style="text-align:center;max-width:360px;width:100%">
+    <div style="font-size:56px;margin-bottom:16px">🔒</div>
+    <div style="font-size:1.5em;font-weight:800;margin-bottom:8px" id="t-pw-title">Enter Password</div>
+    <div style="color:rgba(255,255,255,0.45);font-size:0.88em;margin-bottom:28px" id="t-pw-sub">This game is for the APJ team only 💛</div>
+    <input class="name-input" id="pwInput" type="password" placeholder="Password..." onkeydown="if(event.key==='Enter')checkPassword()" style="width:100%;margin-bottom:12px"/>
+    <p class="error-msg hidden" id="pwError" style="margin-bottom:12px"></p>
+    <button class="btn btn-primary" onclick="checkPassword()" style="width:100%" id="t-pw-btn">Enter 🚀</button>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div class="screen" id="lobby">
+  <div class="title-emoji">🎉</div>
+  <div class="game-title" id="t-title">How Well Do You Know Ai?</div>
+  <div class="game-subtitle" id="t-subtitle">A farewell quiz for the whole APJ team!</div>
+  <div class="role-cards">
+    <div class="role-card" onclick="selectRole('host')" id="card-host">
+      <div class="role-icon">🎤</div>
+      <div class="role-name" id="t-host-name">Host</div>
+      <div class="role-desc" id="t-host-desc">Control the game, reveal answers</div>
+    </div>
+    <div class="role-card" onclick="selectRole('player')" id="card-player">
+      <div class="role-icon">🙋</div>
+      <div class="role-name" id="t-player-name">Player</div>
+      <div class="role-desc" id="t-player-desc">Answer questions & earn points</div>
+    </div>
+  </div>
+  <input class="name-input" id="nameInput" placeholder="Enter your name..." maxlength="20" oninput="checkReady()" />
+  <p class="error-msg hidden" id="nameError"></p>
+  <button class="btn btn-primary" id="startBtn" onclick="joinGame()" disabled id="t-start">Let's Go! 🚀</button>
+</div>
+
+<!-- HOST PANEL -->
+<div class="screen" id="host-panel">
+  <div class="host-header">
+    <h2 id="t-hp-title">🎤 Host Dashboard</h2>
+    <p id="t-hp-sub">Players joined — start whenever you're ready!</p>
+  </div>
+  <div class="player-list" style="max-width:700px;width:100%">
+    <h3 id="t-players-joined">PLAYERS JOINED</h3>
+    <div class="player-chips" id="playerChips"></div>
+  </div>
+  <div class="q-preview" style="max-width:700px;width:100%">
+    <h3 id="t-q-overview">QUESTION OVERVIEW</h3>
+    <div id="qOverview"></div>
+  </div>
+  <button class="btn btn-primary" onclick="hostStartGame()" id="t-start-game">Start Game! 🎮</button>
+</div>
+
+<!-- PLAYER WAITING -->
+<div class="screen" id="player-waiting">
+  <div class="waiting-animation">⏳</div>
+  <h2 id="t-wait-title" style="font-size:1.4em;font-weight:800;margin-bottom:10px">You're in! Waiting for host...</h2>
+  <p id="t-wait-sub" style="color:rgba(255,255,255,0.45);font-size:0.9em">The game will start soon. Get ready! 🎉</p>
+  <div style="margin-top:30px;background:rgba(255,255,255,0.07);border-radius:14px;padding:16px 24px;text-align:center">
+    <p style="font-size:0.8em;color:rgba(255,255,255,0.35);margin-bottom:6px" id="t-you-are">YOU ARE</p>
+    <p style="font-size:1.3em;font-weight:800;color:#f9ca24" id="waitingName"></p>
+  </div>
+</div>
+
+<!-- QUESTION (PLAYER) -->
+<div class="screen" id="question-screen">
+  <div class="q-container">
+    <div class="q-meta">
+      <span class="q-counter" id="qCounter">Q1 / 15</span>
+      <span class="q-type-tag" id="qTypeTag"></span>
+    </div>
+    <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+    <div class="q-text" id="qText"></div>
+    <div class="q-text-sub" id="qTextSub"></div>
+    <div class="options-grid" id="optionsGrid"></div>
+    <div class="submitted-msg hidden" id="submittedMsg"></div>
+  </div>
+</div>
+
+<!-- QUESTION (HOST) -->
+<div class="screen" id="host-question">
+  <div class="host-q-container">
+    <div class="q-meta">
+      <span class="q-counter" id="hqCounter">Q1 / 15</span>
+      <span class="q-type-tag" id="hqTypeTag"></span>
+    </div>
+    <div class="q-text" id="hqText" style="font-size:1.2em;margin-bottom:8px"></div>
+    <div class="q-text-sub" id="hqTextSub" style="margin-bottom:16px"></div>
+    <div class="live-answers" id="liveAnswers"></div>
+    <div class="host-controls">
+      <button class="btn btn-reveal" onclick="revealAnswer()" id="t-reveal-btn">🔍 Reveal Answer</button>
+      <button class="btn btn-next hidden" onclick="nextQuestion()" id="nextBtn">Next ➡️</button>
+      <button class="btn btn-end hidden" onclick="endGame()" id="endBtn">🏁 End & Results</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVEAL (PLAYER) -->
+<div class="screen" id="reveal-screen">
+  <div class="reveal-container">
+    <div class="reveal-label" id="t-reveal-label">ANSWER REVEAL</div>
+    <div class="reveal-question" id="revealQ"></div>
+    <div class="reveal-options" id="revealOpts"></div>
+    <div class="funny-comment" id="funnyComment"></div>
+    <div id="scoreFlashArea"></div>
+    <p style="color:rgba(255,255,255,0.35);font-size:0.82em;margin-top:12px" id="t-wait-next">Waiting for host to continue...</p>
+  </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="screen" id="leaderboard">
+  <div class="lb-container">
+    <div class="lb-title" id="t-lb-title">🏆 Leaderboard</div>
+    <div class="lb-subtitle" id="t-lb-sub">Scores after this round</div>
+    <div id="lbRows"></div>
+    <p style="color:rgba(255,255,255,0.35);font-size:0.82em;margin-top:16px" id="t-wait-next2">Waiting for host to continue...</p>
+  </div>
+</div>
+
+<!-- FINAL -->
+<div class="screen" id="final-screen">
+  <div class="confetti-area">🎊</div>
+  <div class="final-title" id="t-final-title">That's a Wrap! 🎉</div>
+  <p class="final-msg" id="t-final-msg">Thanks for playing! Ai, we hope this made you smile. Wishing you all the best on your next adventure! 💛</p>
+  <div class="memory-card">
+    <h3 id="t-memory-title">GAME MEMORIES</h3>
+    <div id="memoryStats"></div>
+  </div>
+  <div id="finalLeaderboard"></div>
+</div>
+
+<script>
+// ── PASSWORD ───────────────────────────────────────────────────────────────
+const GAME_PASSWORD = 'wewillmissyouAi'; // ← 你可以在这里修改密码
+
+function checkPassword() {
+  const val = document.getElementById('pwInput').value;
+  const err = document.getElementById('pwError');
+  if (val === GAME_PASSWORD) {
+    showScreen('lobby');
+  } else {
+    err.textContent = lang === 'ja' ? '❌ パスワードが違います。もう一度試してください。' : '❌ Wrong password. Please try again.';
+    err.classList.remove('hidden');
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+  }
+}
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let lang = 'en';
+let role = null;
+let myName = '';
+let myScore = 0;
+let selectedAnswer = null;
+let answered = false;
+let currentQ = 0;
+let timerInterval = null;
+let timeLeft = 20;
+let revealed = false;
+
+// Shared state (simulated via localStorage for demo)
+const STORAGE_KEY = 'ai_farewell_game';
+let gameState = {
+  started: false,
+  currentQ: -1,
+  revealed: false,
+  ended: false,
+  players: {},   // name -> score
+  answers: {}    // name -> answerIndex for current Q
+};
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState)); } catch(e){}
+}
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) gameState = JSON.parse(s);
+  } catch(e) {}
+}
+
+// ── TRANSLATIONS ───────────────────────────────────────────────────────────
+const T = {
+  en: {
+    'pw-title': 'Enter Password', 'pw-sub': 'This game is for the APJ team only 💛', 'pw-btn': 'Enter 🚀',
+    'subtitle': 'A farewell quiz for the whole APJ team!',
+    'host-name': 'Host', 'host-desc': 'Control the game, reveal answers',
+    'player-name': 'Player', 'player-desc': 'Answer questions & earn points',
+    'start': "Let's Go! 🚀",
+    'hp-title': '🎤 Host Dashboard', 'hp-sub': 'Players joined — start whenever you\'re ready!',
+    'players-joined': 'PLAYERS JOINED', 'q-overview': 'QUESTION OVERVIEW',
+    'start-game': 'Start Game! 🎮',
+    'wait-title': "You're in! Waiting for host...",
+    'wait-sub': 'The game will start soon. Get ready! 🎉',
+    'you-are': 'YOU ARE',
+    'reveal-label': 'ANSWER REVEAL',
+    'wait-next': 'Waiting for host to continue...',
+    'lb-title': '🏆 Leaderboard', 'lb-sub': 'Scores after this round',
+    'final-title': "That's a Wrap! 🎉",
+    'final-msg': "Thanks for playing! Ai, we hope this made you smile. Wishing you all the best on your next adventure! 💛",
+    'memory-title': 'GAME MEMORIES',
+    'reveal-btn': '🔍 Reveal Answer',
+    'name-placeholder': 'Enter your name...',
+    'submitted': "✅ Answer submitted! Waiting for reveal...",
+    'pts': 'pts',
+    'fact': 'FACT OR FICTION', 'choice': 'AI WOULD CHOOSE', 'sabotage': 'WHO IS IT?',
+    'points-earned': '+{n} points!', 'sorry': 'Oops, not this time!',
+  },
+  ja: {
+    'pw-title': 'パスワードを入力', 'pw-sub': 'このゲームはAPJチーム専用です 💛', 'pw-btn': '入る 🚀',
+    'subtitle': 'APJチーム全員参加のお別れクイズ！',
+    'host-name': 'ホスト', 'host-desc': 'ゲームを操作し、答えを公開する',
+    'player-name': 'プレイヤー', 'player-desc': '問題に答えてポイントをゲット',
+    'start': 'はじめよう！🚀',
+    'hp-title': '🎤 ホストダッシュボード', 'hp-sub': 'プレイヤーが参加しました — 準備ができたら開始！',
+    'players-joined': '参加プレイヤー', 'q-overview': '問題一覧',
+    'start-game': 'ゲームスタート！🎮',
+    'wait-title': '参加完了！ホストを待っています...',
+    'wait-sub': 'もうすぐ始まります。準備して！🎉',
+    'you-are': 'あなたは',
+    'reveal-label': '答え合わせ',
+    'wait-next': 'ホストが次に進むのを待っています...',
+    'lb-title': '🏆 ランキング', 'lb-sub': 'このラウンドの得点',
+    'final-title': 'ゲーム終了！🎉',
+    'final-msg': 'ご参加ありがとうございました！Aiさん、笑顔になれましたか？新しい旅路のご活躍を願っています！💛',
+    'memory-title': 'ゲームの思い出',
+    'reveal-btn': '🔍 答えを見る',
+    'name-placeholder': '名前を入力...',
+    'submitted': '✅ 回答済み！答え合わせをお待ちください...',
+    'pts': 'pts',
+    'fact': 'ファクト OR フィクション', 'choice': 'Aiならどっち？', 'sabotage': '誰のこと？',
+    'points-earned': '+{n}ポイント！', 'sorry': '残念、不正解！',
+  }
+};
+
+function t(key, vars) {
+  let s = T[lang][key] || T['en'][key] || key;
+  if (vars) Object.entries(vars).forEach(([k,v]) => s = s.replace(`{${k}}`, v));
+  return s;
+}
+
+// ── QUESTIONS ──────────────────────────────────────────────────────────────
+const questions = [
+  // FACT OR FICTION (5)
+  {
+    type: 'fact',
+    en: { q: 'Ai loves beer more than wine.', sub: 'True or False?', opts: ['✅ True', '❌ False'], correct: 0 },
+    ja: { q: 'Aiさんはワインよりビールが好きだ。', sub: '本当？ウソ？', opts: ['✅ 本当', '❌ ウソ'], correct: 0 },
+    funny: { en: "Cheers to that! 🍺 A woman of culture.", ja: "乾杯！🍺 さすがAiさん、わかってる。" }
+  },
+  {
+    type: 'fact',
+    en: { q: 'Ai once attended a concert alone just because she loved the artist.', sub: 'True or False?', opts: ['✅ True', '❌ False'], correct: 0 },
+    ja: { q: 'Aiさんは好きなアーティストのために一人でコンサートに行ったことがある。', sub: '本当？ウソ？', opts: ['✅ 本当', '❌ ウソ'], correct: 0 },
+    funny: { en: "Iconic solo concertgoer energy. No one can stop her. 🎻", ja: "一人でコンサートに行く、それがAiさんのスタイル。最高です 🎻" }
+  },
+  {
+    type: 'fact',
+    en: { q: 'Ai can finish a bag of potato chips in one sitting without any regrets.', sub: 'True or False?', opts: ['✅ True', '❌ False'], correct: 0 },
+    ja: { q: 'Aiさんはポテトチップスを一袋、後悔なしに一気食いできる。', sub: '本当？ウソ？', opts: ['✅ 本当', '❌ ウソ'], correct: 0 },
+    funny: { en: "This was NOT a question. This is just a fact of life. 🥔", ja: "これはもはや常識です 🥔" }
+  },
+  {
+    type: 'fact',
+    en: { q: 'Ai has visited a hot spring (onsen) at least 3 times in the past year.', sub: 'True or False?', opts: ['✅ True', '❌ False'], correct: 0 },
+    ja: { q: 'Aiさんは去年、温泉に少なくとも3回行った。', sub: '本当？ウソ？', opts: ['✅ 本当', '❌ ウソ'], correct: 0 },
+    funny: { en: "Hot spring mode: ACTIVATED. Can you blame her? ♨️", ja: "温泉モード：全開。誰も責めません ♨️" }
+  },
+  {
+    type: 'fact',
+    en: { q: "Ai's first impression of at least one APJ team member was \"this person is a bit scary.\"", sub: 'True or False?', opts: ['✅ True', '❌ False'], correct: 0 },
+    ja: { q: 'AiさんのAPJメンバーへの第一印象で「ちょっと怖い」と思った人が少なくとも一人いる。', sub: '本当？ウソ？', opts: ['✅ 本当', '❌ ウソ'], correct: 0 },
+    funny: { en: "She won't say who… but she's making eye contact with someone right now. 👀", ja: "誰かは言わないけど、今、誰かと目が合っています 👀" }
+  },
+
+  // AI WOULD CHOOSE (5)
+  {
+    type: 'choice',
+    en: { q: 'If Ai had a free Saturday morning, she would choose…', sub: 'What do you think Ai would pick?', opts: ['🏃 Go for a run', '🛋️ Sleep in & do nothing'], correct: 0 },
+    ja: { q: '土曜の朝、自由な時間があったらAiさんは？', sub: 'Aiさんならどっちを選ぶ？', opts: ['🏃 ランニングに行く', '🛋️ 寝たまま何もしない'], correct: 0 },
+    funny: { en: "She RUNS. Even on weekends. Even in the rain. We are not worthy. 🙇", ja: "走ります。週末でも雨でも。私たちには無理です 🙇" }
+  },
+  {
+    type: 'choice',
+    en: { q: 'When relaxing, Ai would choose…', sub: 'What do you think Ai would pick?', opts: ['🎵 Classical music', '🎬 Netflix binge'], correct: 0 },
+    ja: { q: 'リラックスするとき、Aiさんが選ぶのは？', sub: 'Aiさんならどっちを選ぶ？', opts: ['🎵 クラシック音楽', '🎬 Netflixを一気見'], correct: 0 },
+    funny: { en: "Classical. Always classical. She probably conducts along silently. 🎼", ja: "クラシック。間違いなく。たぶん心の中で指揮してます 🎼" }
+  },
+  {
+    type: 'sabotage',
+    en: { q: 'Who is most likely to get lost in a new city? 🗺️', sub: 'Pick a teammate — most votes wins!', opts: ['[Player 1]', '[Player 2]', '[Player 3]', '[Player 4]'], correct: -1 },
+    ja: { q: '知らない街で一番迷子になりそうなのは誰？🗺️', sub: 'チームメンバーを選ぼう！一番多い票が正解！', opts: ['[プレイヤー1]', '[プレイヤー2]', '[プレイヤー3]', '[プレイヤー4]'], correct: -1 },
+    funny: { en: "Google Maps open. Still lost. We love them anyway. 😂", ja: "Googleマップを開いてても迷子。でも愛してます 😂" }
+  },
+  {
+    type: 'choice',
+    en: { q: 'If Ai could only use one perfume forever, she would…', sub: 'What do you think Ai would pick?', opts: ['🌸 Pick a light floral scent', '🌲 Pick a deep woody scent'], correct: 0 },
+    ja: { q: '一つの香水しか使えないとしたら、Aiさんは？', sub: 'Aiさんならどっちを選ぶ？', opts: ['🌸 軽いフローラル系', '🌲 深みのあるウッディ系'], correct: 0 },
+    funny: { en: "Either way she smells amazing and we all know it. 💐", ja: "どちらにしてもすごくいい香りがするはず 💐" }
+  },
+  {
+    type: 'choice',
+    en: { q: 'When starting a new challenge, Ai would…', sub: 'What do you think Ai would pick?', opts: ['📋 Make a detailed plan first', '🔥 Jump straight in & figure it out'], correct: 1 },
+    ja: { q: '新しいことに挑戦するとき、Aiさんは？', sub: 'Aiさんならどっちを選ぶ？', opts: ['📋 まず詳細な計画を立てる', '🔥 とりあえず飛び込んで考える'], correct: 1 },
+    funny: { en: "She dives in. Fearless. A true leader. 🫡", ja: "飛び込む派。恐れ知らず。さすがリーダー 🫡" }
+  },
+
+  // SABOTAGE / WHO IS IT? (5)
+  {
+    type: 'sabotage',
+    en: { q: 'Who is most likely to forget to unmute themselves on a Zoom call?', sub: 'Pick a teammate — most votes wins!', opts: ['[Player 1]', '[Player 2]', '[Player 3]', '[Player 4]'], correct: -1 },
+    ja: { q: 'Zoomで「ミュート解除」を忘れがちなのは誰？', sub: 'チームメンバーを選ぼう！一番多い票が正解！', opts: ['[プレイヤー1]', '[プレイヤー2]', '[プレイヤー3]', '[プレイヤー4]'], correct: -1 },
+    funny: { en: "The accused has been unmasked. They know who they are. 🎭", ja: "犯人が判明しました。本人もわかってるはず 🎭" }
+  },
+  {
+    type: 'sabotage',
+    en: { q: 'Who on the team is most likely to secretly be eating snacks during a meeting?', sub: 'Pick a teammate — most votes wins!', opts: ['[Player 1]', '[Player 2]', '[Player 3]', '[Player 4]'], correct: -1 },
+    ja: { q: 'ミーティング中にこっそりお菓子を食べてそうなのは誰？', sub: 'チームメンバーを選ぼう！一番多い票が正解！', opts: ['[プレイヤー1]', '[プレイヤー2]', '[プレイヤー3]', '[プレイヤー4]'], correct: -1 },
+    funny: { en: "No comment. We're all looking at the same person. 🍿", ja: "みんな同じ人を見てます。ノーコメント 🍿" }
+  },
+  {
+    type: 'sabotage',
+    en: { q: 'Who would survive longest on a deserted island?', sub: 'Pick a teammate — most votes wins!', opts: ['[Player 1]', '[Player 2]', '[Player 3]', '[Player 4]'], correct: -1 },
+    ja: { q: '無人島で一番長く生き残れそうなのは誰？', sub: 'チームメンバーを選ぼう！一番多い票が正解！', opts: ['[プレイヤー1]', '[プレイヤー2]', '[プレイヤー3]', '[プレイヤー4]'], correct: -1 },
+    funny: { en: "They'd probably build a WiFi hotspot by day 3. 📡", ja: "3日目にはWiFiを開通させてそう 📡" }
+  },
+  {
+    type: 'sabotage',
+    en: { q: 'Who is most likely to plan the next team trip down to every detail?', sub: 'Pick a teammate — most votes wins!', opts: ['[Player 1]', '[Player 2]', '[Player 3]', '[Player 4]'], correct: -1 },
+    ja: { q: '次のチーム旅行を細部まで完璧に計画しそうなのは誰？', sub: 'チームメンバーを選ぼう！一番多い票が正解！', opts: ['[プレイヤー1]', '[プレイヤー2]', '[プレイヤー3]', '[プレイヤー4]'], correct: -1 },
+    funny: { en: "Spreadsheet made. Flights booked. Hotel reviewed 47 times. 📊", ja: "スプレッドシート作成済。フライト予約済。ホテル47回チェック済 📊" }
+  },
+  {
+    type: 'sabotage',
+    en: { q: "Who is most likely to send a message in the team chat at midnight?", sub: 'Pick a teammate — most votes wins!', opts: ['[Player 1]', '[Player 2]', '[Player 3]', '[Player 4]'], correct: -1 },
+    ja: { q: '夜中の12時にチームチャットにメッセージを送ってきそうなのは誰？', sub: 'チームメンバーを選ぼう！一番多い票が正解！', opts: ['[プレイヤー1]', '[プレイヤー2]', '[プレイヤー3]', '[プレイヤー4]'], correct: -1 },
+    funny: { en: "\"Just a quick update 👀\" — at 11:58pm. We've all seen it. 🌙", ja: "「ちょっとしたアップデートです👀」— 深夜23:58。みんな見てる 🌙" }
+  }
+];
+
+// ── LANG TOGGLE ────────────────────────────────────────────────────────────
+function toggleLang() {
+  lang = lang === 'en' ? 'ja' : 'en';
+  document.getElementById('langToggle').textContent = lang === 'en' ? '🇯🇵 日本語' : '🇬🇧 English';
+  applyLang();
+}
+
+function applyLang() {
+  const keys = ['title','subtitle','host-name','host-desc','player-name','player-desc',
+    'hp-title','hp-sub','players-joined','q-overview','start-game',
+    'wait-title','wait-sub','you-are','reveal-label','wait-next','wait-next2',
+    'lb-title','lb-sub','final-title','final-msg','memory-title','reveal-btn'];
+  keys.forEach(k => {
+    const el = document.getElementById('t-' + k);
+    if (el) el.textContent = t(k);
+  });
+  const ni = document.getElementById('nameInput');
+  if (ni) ni.placeholder = t('name-placeholder');
+  const sb = document.getElementById('startBtn');
+  if (sb) sb.textContent = t('start');
+  // Re-render current question if on question screen
+  const qs = document.getElementById('question-screen');
+  if (qs && qs.classList.contains('active') && currentQ >= 0) renderQuestion();
+}
+
+// ── ROLE & JOIN ────────────────────────────────────────────────────────────
+function selectRole(r) {
+  role = r;
+  document.getElementById('card-host').classList.toggle('selected', r === 'host');
+  document.getElementById('card-player').classList.toggle('selected', r === 'player');
+  checkReady();
+}
+
+function checkReady() {
+  const name = document.getElementById('nameInput').value.trim();
+  document.getElementById('startBtn').disabled = !(role && name.length >= 1);
+}
+
+function joinGame() {
+  myName = document.getElementById('nameInput').value.trim();
+  if (!myName || !role) return;
+
+  loadState();
+  if (role === 'host') {
+    // Reset game
+    gameState = { started: false, currentQ: -1, revealed: false, ended: false, players: {}, answers: {} };
+    gameState.players[myName] = 0;
+    saveState();
+    showScreen('host-panel');
+    renderHostPanel();
+    startPolling();
+  } else {
+    if (!gameState.players[myName]) gameState.players[myName] = 0;
+    saveState();
+    document.getElementById('waitingName').textContent = myName;
+    showScreen('player-waiting');
+    startPolling();
+  }
+}
+
+// ── HOST PANEL ────────────────────────────────────────────────────────────
+function renderHostPanel() {
+  const chips = document.getElementById('playerChips');
+  chips.innerHTML = Object.keys(gameState.players).map(n =>
+    `<span class="player-chip">${n}</span>`
+  ).join('');
+
+  const overview = document.getElementById('qOverview');
+  const typeColors = { fact: 'badge-fact', choice: 'badge-choice', sabotage: 'badge-sabotage' };
+  const typeLabels = { fact: lang === 'ja' ? 'ファクト' : 'FACT', choice: lang === 'ja' ? 'チョイス' : 'CHOICE', sabotage: lang === 'ja' ? '互坑' : 'WHO?' };
+  overview.innerHTML = questions.map((q, i) => {
+    const qd = q[lang] || q.en;
+    return `<div class="q-item">
+      <span class="q-num">${i+1}</span>
+      <span class="q-type-badge ${typeColors[q.type]}">${typeLabels[q.type]}</span>
+      <span>${qd.q}</span>
+    </div>`;
+  }).join('');
+}
+
+function hostStartGame() {
+  loadState();
+  gameState.started = true;
+  gameState.currentQ = 0;
+  gameState.revealed = false;
+  gameState.answers = {};
+  saveState();
+  showHostQuestion(0);
+}
+
+// ── POLLING ────────────────────────────────────────────────────────────────
+let pollTimer = null;
+function startPolling() {
+  pollTimer = setInterval(() => {
+    loadState();
+    if (role === 'host') {
+      renderHostPanel();
+      if (gameState.ended) { clearInterval(pollTimer); showFinal(); }
+    } else {
+      if (gameState.ended) { clearInterval(pollTimer); showFinal(); return; }
+      if (gameState.started && gameState.currentQ >= 0) {
+        const q = gameState.currentQ;
+        const rev = gameState.revealed;
+        const screen = getCurrentScreen();
+        if (rev && screen !== 'leaderboard') {
+          clearInterval(pollTimer);
+          showReveal(q);
+          // restart polling
+          pollTimer = setInterval(() => {
+            loadState();
+            if (gameState.ended) { clearInterval(pollTimer); showFinal(); return; }
+            if (gameState.currentQ !== q && !gameState.ended) {
+              clearInterval(pollTimer);
+              if (gameState.currentQ < questions.length) {
+                showScreen('player-waiting');
+                document.getElementById('waitingName').textContent = myName;
+                startPolling();
+              }
+            }
+          }, 1000);
+        } else if (!rev && screen === 'player-waiting') {
+          clearInterval(pollTimer);
+          currentQ = q;
+          answered = false;
+          selectedAnswer = null;
+          showScreen('question-screen');
+          renderQuestion();
+          startQuestionTimer();
+          // Poll for reveal
+          pollTimer = setInterval(() => {
+            loadState();
+            if (gameState.revealed && gameState.currentQ === q) {
+              clearInterval(pollTimer);
+              showReveal(q);
+              pollTimer = setInterval(() => {
+                loadState();
+                if (gameState.ended) { clearInterval(pollTimer); showFinal(); return; }
+                if (gameState.currentQ !== q) {
+                  clearInterval(pollTimer);
+                  showScreen('player-waiting');
+                  document.getElementById('waitingName').textContent = myName;
+                  startPolling();
+                }
+              }, 1000);
+            }
+          }, 1200);
+        }
+      }
+    }
+  }, 1500);
+}
+
+function getCurrentScreen() {
+  const screens = ['lobby','host-panel','player-waiting','question-screen','host-question','reveal-screen','leaderboard','final-screen'];
+  return screens.find(s => document.getElementById(s).classList.contains('active')) || '';
+}
+
+// ── QUESTION RENDERING ─────────────────────────────────────────────────────
+function renderQuestion() {
+  const q = questions[currentQ];
+  const qd = q[lang] || q.en;
+  const typeLabels = { fact: t('fact'), choice: t('choice'), sabotage: t('sabotage') };
+  const typeColors = { fact: '#74b9ff', choice: '#a29bfe', sabotage: '#fd79a8' };
+
+  document.getElementById('qCounter').textContent = `Q${currentQ+1} / ${questions.length}`;
+  const tag = document.getElementById('qTypeTag');
+  tag.textContent = typeLabels[q.type];
+  tag.style.background = typeColors[q.type] + '22';
+  tag.style.color = typeColors[q.type];
+  tag.style.border = `1px solid ${typeColors[q.type]}55`;
+
+  document.getElementById('qText').textContent = qd.q;
+  document.getElementById('qTextSub').textContent = qd.sub;
+
+  // For sabotage: use player names
+  let opts = [...qd.opts];
+  if (q.type === 'sabotage') {
+    const players = Object.keys(gameState.players).filter(n => n !== myName);
+    opts = players.length >= 2 ? players.slice(0, 4) : opts;
+  }
+
+  const grid = document.getElementById('optionsGrid');
+  grid.style.gridTemplateColumns = opts.length === 2 ? '1fr 1fr' : '1fr';
+  grid.innerHTML = opts.map((o, i) =>
+    `<button class="option-btn" onclick="submitAnswer(${i})" id="opt${i}">${o}</button>`
+  ).join('');
+
+  document.getElementById('submittedMsg').classList.add('hidden');
+}
+
+function startQuestionTimer() {
+  timeLeft = 20;
+  clearInterval(timerInterval);
+  document.getElementById('timerFill').style.width = '100%';
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timerFill').style.width = (timeLeft / 20 * 100) + '%';
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) submitAnswer(-1);
+    }
+  }, 1000);
+}
+
+function submitAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  selectedAnswer = idx;
+  clearInterval(timerInterval);
+
+  // Highlight selection
+  document.querySelectorAll('.option-btn').forEach((b, i) => {
+    b.disabled = true;
+    if (i === idx) b.classList.add('selected');
+  });
+
+  // Save answer
+  loadState();
+  if (!gameState.answers) gameState.answers = {};
+  gameState.answers[myName] = idx;
+  saveState();
+
+  document.getElementById('submittedMsg').textContent = t('submitted');
+  document.getElementById('submittedMsg').classList.remove('hidden');
+}
+
+// ── HOST QUESTION VIEW ─────────────────────────────────────────────────────
+function showHostQuestion(qIdx) {
+  loadState();
+  currentQ = qIdx;
+  gameState.currentQ = qIdx;
+  gameState.revealed = false;
+  gameState.answers = {};
+  saveState();
+
+  const q = questions[qIdx];
+  const qd = q[lang] || q.en;
+  const typeLabels = { fact: t('fact'), choice: t('choice'), sabotage: t('sabotage') };
+  const typeColors = { fact: '#74b9ff', choice: '#a29bfe', sabotage: '#fd79a8' };
+
+  showScreen('host-question');
+  document.getElementById('hqCounter').textContent = `Q${qIdx+1} / ${questions.length}`;
+  const tag = document.getElementById('hqTypeTag');
+  tag.textContent = typeLabels[q.type];
+  tag.style.background = typeColors[q.type] + '22';
+  tag.style.color = typeColors[q.type];
+  document.getElementById('hqText').textContent = qd.q;
+  document.getElementById('hqTextSub').textContent = qd.sub;
+
+  let opts = [...qd.opts];
+  if (q.type === 'sabotage') {
+    const players = Object.keys(gameState.players);
+    if (players.length >= 2) opts = players.slice(0, 4);
+  }
+
+  document.getElementById('liveAnswers').innerHTML = opts.map((o, i) => `
+    <div class="answer-bar">
+      <div class="answer-label"><span>${o}</span><span id="bar-count-${i}">0</span></div>
+      <div class="bar-track"><div class="bar-fill" id="bar-fill-${i}" style="width:0%;background:${typeColors[q.type]}"></div></div>
+    </div>
+  `).join('');
+
+  document.getElementById('t-reveal-btn').classList.remove('hidden');
+  document.getElementById('nextBtn').classList.add('hidden');
+  document.getElementById('endBtn').classList.add('hidden');
+
+  // Poll for answers
+  clearInterval(pollTimer);
+  pollTimer = setInterval(() => {
+    loadState();
+    updateLiveBars(opts.length);
+  }, 1200);
+}
+
+function updateLiveBars(numOpts) {
+  const answers = gameState.answers || {};
+  const counts = Array(numOpts).fill(0);
+  Object.values(answers).forEach(a => { if (a >= 0 && a < numOpts) counts[a]++; });
+  const total = counts.reduce((a,b) => a+b, 0) || 1;
+  counts.forEach((c, i) => {
+    const fill = document.getElementById('bar-fill-' + i);
+    const count = document.getElementById('bar-count-' + i);
+    if (fill) fill.style.width = (c / total * 100) + '%';
+    if (count) count.textContent = c;
+  });
+}
+
+function revealAnswer() {
+  clearInterval(pollTimer);
+  loadState();
+
+  const q = questions[currentQ];
+  const qd = q[lang] || q.en;
+  let opts = [...qd.opts];
+  if (q.type === 'sabotage') {
+    const players = Object.keys(gameState.players);
+    if (players.length >= 2) opts = players.slice(0, 4);
+  }
+  updateLiveBars(opts.length);
+
+  // Award points
+  const answers = gameState.answers || {};
+  if (q.type !== 'sabotage') {
+    Object.entries(answers).forEach(([name, ans]) => {
+      if (ans === q[lang]?.correct ?? q.en.correct) {
+        gameState.players[name] = (gameState.players[name] || 0) + 100;
+      }
+    });
+  } else {
+    // Most voted wins +50 (everyone who voted for most popular)
+    const counts = Array(opts.length).fill(0);
+    Object.values(answers).forEach(a => { if (a >= 0 && a < opts.length) counts[a]++; });
+    const maxVotes = Math.max(...counts);
+    const winnerIdx = counts.indexOf(maxVotes);
+    Object.entries(answers).forEach(([name, ans]) => {
+      if (ans === winnerIdx) gameState.players[name] = (gameState.players[name] || 0) + 50;
+    });
+  }
+
+  gameState.revealed = true;
+  saveState();
+
+  document.getElementById('t-reveal-btn').classList.add('hidden');
+  const isLast = currentQ >= questions.length - 1;
+  if (isLast) {
+    document.getElementById('endBtn').classList.remove('hidden');
+  } else {
+    document.getElementById('nextBtn').classList.remove('hidden');
+  }
+  document.getElementById('nextBtn').textContent = lang === 'ja' ? `次の問題 ➡️` : `Next ➡️`;
+}
+
+function nextQuestion() {
+  clearInterval(pollTimer);
+  const next = currentQ + 1;
+  showHostQuestion(next);
+}
+
+function endGame() {
+  clearInterval(pollTimer);
+  loadState();
+  gameState.ended = true;
+  saveState();
+  showFinal();
+}
+
+// ── REVEAL SCREEN (PLAYER) ─────────────────────────────────────────────────
+function showReveal(qIdx) {
+  const q = questions[qIdx];
+  const qd = q[lang] || q.en;
+  loadState();
+
+  let opts = [...qd.opts];
+  if (q.type === 'sabotage') {
+    const players = Object.keys(gameState.players);
+    if (players.length >= 2) opts = players.slice(0, 4);
+  }
+
+  const answers = gameState.answers || {};
+  const counts = Array(opts.length).fill(0);
+  Object.values(answers).forEach(a => { if (a >= 0 && a < opts.length) counts[a]++; });
+
+  let correctIdx = q[lang]?.correct ?? q.en.correct;
+  if (q.type === 'sabotage') {
+    correctIdx = counts.indexOf(Math.max(...counts));
+  }
+
+  document.getElementById('revealQ').textContent = qd.q;
+  document.getElementById('revealOpts').innerHTML = opts.map((o, i) => {
+    const isCorrect = i === correctIdx;
+    const voters = counts[i];
+    return `<div class="reveal-opt ${isCorrect ? 'correct-ans' : 'wrong-ans'}">
+      <span>${isCorrect ? '✅ ' : ''}${o}</span>
+      <span class="voters">${voters} ${lang === 'ja' ? '票' : 'vote' + (voters !== 1 ? 's' : '')}</span>
+    </div>`;
+  }).join('');
+
+  const funny = q.funny?.[lang] || q.funny?.en || '';
+  document.getElementById('funnyComment').textContent = funny ? `💬 ${funny}` : '';
+
+  // Score flash
+  const myAns = answers[myName];
+  const gotIt = q.type !== 'sabotage' ? myAns === correctIdx : myAns === correctIdx;
+  const pts = q.type === 'sabotage' ? 50 : 100;
+  const flash = document.getElementById('scoreFlashArea');
+  if (gotIt && myAns !== undefined && myAns !== -1) {
+    flash.innerHTML = `<div class="score-flash">${t('points-earned', {n: pts})}</div>`;
+  } else {
+    flash.innerHTML = `<p style="color:rgba(255,255,255,0.4);margin-top:12px">${myAns === -1 || myAns === undefined ? '⏰ Time\'s up!' : t('sorry')}</p>`;
+  }
+
+  showScreen('reveal-screen');
+}
+
+// ── LEADERBOARD ────────────────────────────────────────────────────────────
+function renderLeaderboard(containerId) {
+  const sorted = Object.entries(gameState.players).sort((a,b) => b[1]-a[1]);
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById(containerId).innerHTML = sorted.map(([name, score], i) => `
+    <div class="lb-row ${i===0?'top1':i===1?'top2':i===2?'top3':''}">
+      <span class="lb-rank">${medals[i] || (i+1)}</span>
+      <span class="lb-name">${name}</span>
+      <span class="lb-score">${score} ${t('pts')}</span>
+    </div>
+  `).join('');
+}
+
+// ── FINAL ──────────────────────────────────────────────────────────────────
+function showFinal() {
+  loadState();
+  showScreen('final-screen');
+
+  const sorted = Object.entries(gameState.players).sort((a,b) => b[1]-a[1]);
+  const winner = sorted[0];
+  const totalAnswers = Object.keys(gameState.answers || {}).length;
+
+  document.getElementById('memoryStats').innerHTML = `
+    <div class="stat-row"><span class="stat-label">${lang==='ja'?'参加人数':'Players'}</span><span class="stat-val">${sorted.length}</span></div>
+    <div class="stat-row"><span class="stat-label">${lang==='ja'?'問題数':'Questions'}</span><span class="stat-val">${questions.length}</span></div>
+    <div class="stat-row"><span class="stat-label">${lang==='ja'?'チャンピオン🏆':'Champion 🏆'}</span><span class="stat-val">${winner ? winner[0] : '—'}</span></div>
+    <div class="stat-row"><span class="stat-label">${lang==='ja'?'最高得点':'Top Score'}</span><span class="stat-val">${winner ? winner[1] + ' pts' : '—'}</span></div>
+  `;
+
+  renderLeaderboard('finalLeaderboard');
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// Init
+applyLang();
+</script>
+</body>
+</html>
